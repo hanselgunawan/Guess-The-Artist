@@ -4,11 +4,17 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     Pattern p;
     Matcher m;
     ArrayList<Artist> artist_arr = new ArrayList<Artist>();
+    Random rand = new Random();
 
     public class DownloadTask extends AsyncTask<String, Void, String> {
 
@@ -92,6 +99,30 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void swap(int from_arr, int to_arr) {
+        Collections.swap(artist_arr, from_arr, to_arr);
+    }
+
+    public void shuffleArray() {
+        for(int i = artist_arr.size() - 1; i > 0; i--) {
+            int index = rand.nextInt(i + 1);
+            swap(i, index);
+        }
+    }
+
+    public void displayQuestion(int random_number) {
+        ImageView imageView = findViewById(R.id.imageView);
+        Picasso.get().load(artist_arr.get(random_number).artist_img).into(imageView);
+    }
+
+    public void displayArrayList() {
+        for(int i = 0; i < artist_arr.size(); i++) {
+
+            Log.i("Image & Artist", artist_arr.get(i).artist_img + " | " + artist_arr.get(i).artist_name);
+
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
 
         DownloadTask downloadTask = new DownloadTask();
         String artist_page_source = null;
+        int random_number = rand.nextInt(4) + 1;
 
         try {
             artist_page_source = downloadTask.execute("http://www.posh24.se/kandisar").get();
@@ -110,11 +142,8 @@ public class MainActivity extends AppCompatActivity {
 
         storeArtistImageIntoArray(artist_page_source);
         storeArtistNameIntoArray(artist_page_source);
-
-        for(int i = 0; i < artist_arr.size(); i++) {
-
-            Log.i("Image & Artist", artist_arr.get(i).artist_img + " | " + artist_arr.get(i).artist_name);
-
-        }
+        shuffleArray();
+        displayArrayList();
+        displayQuestion(random_number);
     }
 }
