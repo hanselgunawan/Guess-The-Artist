@@ -1,10 +1,16 @@
 package com.hanseltritama.guesstheartist;
 
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Layout;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -24,6 +30,12 @@ public class MainActivity extends AppCompatActivity {
     Matcher m;
     ArrayList<Artist> artist_arr = new ArrayList<Artist>();
     Random rand = new Random();
+    LinearLayout linearLayout;
+    ImageView imageView;
+    View home_layout;
+    View question_layout;
+
+    int random_number;
 
     public class DownloadTask extends AsyncTask<String, Void, String> {
 
@@ -99,20 +111,54 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void swap(int from_arr, int to_arr) {
-        Collections.swap(artist_arr, from_arr, to_arr);
+    public void shuffleArray() {
+        Collections.shuffle(artist_arr);
     }
 
-    public void shuffleArray() {
-        for(int i = artist_arr.size() - 1; i > 0; i--) {
-            int index = rand.nextInt(i + 1);
-            swap(i, index);
+    public void displayQuestion() {
+        random_number = rand.nextInt(3);
+        shuffleArray();
+        Picasso.get().load(artist_arr.get(random_number).artist_img).into(imageView);
+
+        for(int i = 0; i < linearLayout.getChildCount(); i++) {
+            Button button = (Button) linearLayout.getChildAt(i);
+            button.setText(artist_arr.get(i).artist_name);
         }
     }
 
-    public void displayQuestion(int random_number) {
-        ImageView imageView = findViewById(R.id.imageView);
-        Picasso.get().load(artist_arr.get(random_number).artist_img).into(imageView);
+    public void onAnswerClick(View view) {
+        Button button = (Button) view;
+        if(button.getText() == artist_arr.get(random_number).artist_name)
+            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
+        else
+            Toast.makeText(this,
+                    "Incorrect! It's " + artist_arr.get(random_number).artist_name,
+                    Toast.LENGTH_SHORT).show();
+
+        artist_arr.remove(random_number);
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                displayQuestion();
+            }
+        };
+
+        Handler handler = new Handler();
+        handler.postDelayed(runnable, 1500);
+    }
+
+    public void onPlayNowClick(View view) {
+
+        home_layout.setVisibility(View.INVISIBLE);
+        question_layout.setVisibility(View.VISIBLE);
+
+    }
+
+    public void onExitClick(View view) {
+
+        android.os.Process.killProcess(android.os.Process.myPid());
+        System.exit(1);
+
     }
 
     public void displayArrayList() {
@@ -130,7 +176,14 @@ public class MainActivity extends AppCompatActivity {
 
         DownloadTask downloadTask = new DownloadTask();
         String artist_page_source = null;
-        int random_number = rand.nextInt(4) + 1;
+        home_layout = findViewById(R.id.home_layout);
+        question_layout = findViewById(R.id.question_layout);
+        linearLayout = findViewById(R.id.linear_layout);
+        imageView = findViewById(R.id.imageView);
+
+        imageView.setVisibility(View.INVISIBLE);
+        linearLayout.setVisibility(View.INVISIBLE);
+        home_layout.setVisibility(View.VISIBLE);
 
         try {
             artist_page_source = downloadTask.execute("http://www.posh24.se/kandisar").get();
@@ -142,8 +195,7 @@ public class MainActivity extends AppCompatActivity {
 
         storeArtistImageIntoArray(artist_page_source);
         storeArtistNameIntoArray(artist_page_source);
-        shuffleArray();
         displayArrayList();
-        displayQuestion(random_number);
+        displayQuestion();
     }
 }
