@@ -34,8 +34,11 @@ public class MainActivity extends AppCompatActivity {
     ImageView imageView;
     View home_layout;
     View question_layout;
-
+    DownloadTask downloadTask;
+    String artist_page_source;
     int random_number;
+    int correct_answer;
+    int incorrect_answer;
 
     public class DownloadTask extends AsyncTask<String, Void, String> {
 
@@ -111,6 +114,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void getData(DownloadTask downloadTask, String artist_page_source) {
+
+        try {
+
+            artist_page_source = downloadTask.execute("http://www.posh24.se/kandisar").get();
+
+        }
+        catch (Exception e)
+        {
+
+            e.printStackTrace();
+
+        }
+
+        storeArtistImageIntoArray(artist_page_source);
+        storeArtistNameIntoArray(artist_page_source);
+
+    }
+
     public void shuffleArray() {
         Collections.shuffle(artist_arr);
     }
@@ -128,12 +150,20 @@ public class MainActivity extends AppCompatActivity {
 
     public void onAnswerClick(View view) {
         Button button = (Button) view;
-        if(button.getText() == artist_arr.get(random_number).artist_name)
+        if(button.getText() == artist_arr.get(random_number).artist_name) {
+
             Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
-        else
+            correct_answer++;
+
+        }
+        else {
+
             Toast.makeText(this,
                     "Incorrect! It's " + artist_arr.get(random_number).artist_name,
                     Toast.LENGTH_SHORT).show();
+            incorrect_answer++;
+
+        }
 
         artist_arr.remove(random_number);
         Runnable runnable = new Runnable() {
@@ -169,32 +199,48 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void playGame(int num_of_question) {
+
+        if(artist_arr.size() < num_of_question) getData(downloadTask, artist_page_source);
+        int curr_question = 0;
+
+        while (curr_question < num_of_question) {
+
+            displayQuestion();
+            curr_question++;
+
+        }
+
+        if(curr_question == num_of_question - 1) displayScore();
+
+    }
+
+    public void onQuestionNumberClick(View view) {
+
+        Button questionBtn = (Button) view;
+        int num_of_question = Integer.parseInt(questionBtn.getText().toString());
+        playGame(num_of_question);
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        DownloadTask downloadTask = new DownloadTask();
-        String artist_page_source = null;
         home_layout = findViewById(R.id.home_layout);
         question_layout = findViewById(R.id.question_layout);
         linearLayout = findViewById(R.id.linear_layout);
         imageView = findViewById(R.id.imageView);
+        downloadTask = new DownloadTask();
+        artist_page_source = null;
+        correct_answer = 0;
+        incorrect_answer = 0;
 
         imageView.setVisibility(View.INVISIBLE);
         linearLayout.setVisibility(View.INVISIBLE);
         home_layout.setVisibility(View.VISIBLE);
 
-        try {
-            artist_page_source = downloadTask.execute("http://www.posh24.se/kandisar").get();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-
-        storeArtistImageIntoArray(artist_page_source);
-        storeArtistNameIntoArray(artist_page_source);
+        getData(downloadTask, artist_page_source);
         displayArrayList();
         displayQuestion();
     }
