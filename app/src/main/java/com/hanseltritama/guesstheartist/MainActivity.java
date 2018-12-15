@@ -4,12 +4,12 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Layout;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
@@ -34,11 +34,14 @@ public class MainActivity extends AppCompatActivity {
     ImageView imageView;
     View home_layout;
     View question_layout;
+    View score_layout;
     DownloadTask downloadTask;
     String artist_page_source;
     int random_number;
     int correct_answer;
     int incorrect_answer;
+    int curr_question;
+    int num_of_question;
 
     public class DownloadTask extends AsyncTask<String, Void, String> {
 
@@ -165,10 +168,16 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+        curr_question++;
+
         artist_arr.remove(random_number);
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
+                if(curr_question == num_of_question) {
+                    displayScore(num_of_question);
+                    return;
+                }
                 displayQuestion();
             }
         };
@@ -177,9 +186,19 @@ public class MainActivity extends AppCompatActivity {
         handler.postDelayed(runnable, 1500);
     }
 
+    public void resetScore() {
+
+        correct_answer = 0;
+        incorrect_answer = 0;
+        num_of_question = 0;
+
+    }
+
     public void onPlayNowClick(View view) {
 
+        resetScore();
         home_layout.setVisibility(View.INVISIBLE);
+        score_layout.setVisibility(View.INVISIBLE);
         question_layout.setVisibility(View.VISIBLE);
 
     }
@@ -199,26 +218,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void displayScore(int num_of_question) {
+        imageView.setVisibility(View.INVISIBLE);
+        linearLayout.setVisibility(View.INVISIBLE);
+        score_layout.setVisibility(View.VISIBLE);
+
+        TextView TVCorrect = score_layout.findViewById(R.id.TVCorrect);
+        TextView TVQuestion = score_layout.findViewById(R.id.TVQuestion);
+
+        TVCorrect.setText("" + correct_answer);
+        TVQuestion.setText("" + num_of_question);
+
+    }
+
     public void playGame(int num_of_question) {
 
+        question_layout.setVisibility(View.INVISIBLE);
+        imageView.setVisibility(View.VISIBLE);
+        linearLayout.setVisibility(View.VISIBLE);
+
         if(artist_arr.size() < num_of_question) getData(downloadTask, artist_page_source);
-        int curr_question = 0;
+        curr_question = 0;
 
-        while (curr_question < num_of_question) {
-
-            displayQuestion();
-            curr_question++;
-
-        }
-
-        if(curr_question == num_of_question - 1) displayScore();
+        displayQuestion();
 
     }
 
     public void onQuestionNumberClick(View view) {
 
         Button questionBtn = (Button) view;
-        int num_of_question = Integer.parseInt(questionBtn.getText().toString());
+        num_of_question = Integer.parseInt(questionBtn.getText().toString());
         playGame(num_of_question);
 
     }
@@ -229,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         home_layout = findViewById(R.id.home_layout);
         question_layout = findViewById(R.id.question_layout);
+        score_layout = findViewById(R.id.score_layout);
         linearLayout = findViewById(R.id.linear_layout);
         imageView = findViewById(R.id.imageView);
         downloadTask = new DownloadTask();
